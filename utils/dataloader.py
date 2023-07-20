@@ -58,9 +58,10 @@ class SAMAdaDataset(Dataset):
         seg_labels  = np.eye(self.num_classes + 1)[png.reshape([-1])]
         seg_labels  = seg_labels.reshape((int(self.output_shape[0]), int(self.output_shape[1]), self.num_classes + 1))
 
-        dir = os.path.join(self.img_path, self.img_list[index])
+        jpg_dir = os.path.join(self.img_path, self.img_list[index])
+        png_dir = os.path.join(self.mask_path, self.mask_list[index])
 
-        return jpg, png, seg_labels, dir
+        return jpg, png, seg_labels, jpg_dir, png_dir
 
     def get_img_list(self):
         return self.img_list
@@ -190,7 +191,7 @@ def deeplab_dataset_collate(batch):
     images = []
     pngs = []
     seg_labels = []
-    for img, png, labels, dir in batch:
+    for img, png, labels, jpg_dir, png_dir in batch:
         images.append(img)
         pngs.append(png)
         seg_labels.append(labels)

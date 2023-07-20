@@ -207,8 +207,8 @@ def train(model_path, ver='vit_h'):
     #   （一）此处获得的mAP为验证集的mAP。
     #   （二）此处设置评估参数较为保守，目的是加快评估速度。
     # ------------------------------------------------------------------#
-    eval_flag = True
-    eval_period = 1
+    eval_flag = False
+    eval_period = 5
 
     # ------------------------------------------------------------------#
     #   VOCdevkit_path  数据集路径
@@ -428,10 +428,11 @@ def train(model_path, ver='vit_h'):
         # ----------------------#
         #   记录eval的map曲线
         # ----------------------#
-        val_list = [item[3] for item in val_dataset]
+        val_img_list = [item[3] for item in val_dataset]
+        val_msk_list = [item[4] for item in val_dataset]
         # val_list = list(chain(*val_list))
         if local_rank == 0:
-            eval_callback = EvalCallback(model, input_shape, num_classes, val_list, VOCdevkit_path, log_dir, Cuda, \
+            eval_callback = EvalCallback(model, input_shape, num_classes, val_img_list, val_msk_list, log_dir, Cuda, \
                                          eval_flag=eval_flag, period=eval_period)
         else:
             eval_callback = None
@@ -511,8 +512,8 @@ def train(model_path, ver='vit_h'):
                 # ---------------------------------------#
                 lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, UnFreeze_Epoch)
 
-                for param in model.backbone.parameters():
-                    param.requires_grad = True
+                # for param in model.backbone.parameters():
+                #     param.requires_grad = True
 
                 epoch_step = num_train // batch_size
                 epoch_step_val = num_val // batch_size

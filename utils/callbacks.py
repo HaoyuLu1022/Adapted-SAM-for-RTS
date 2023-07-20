@@ -82,15 +82,16 @@ class LossHistory():
 
 
 class EvalCallback():
-    def __init__(self, net, input_shape, num_classes, image_ids, dataset_path, log_dir, cuda,
+    def __init__(self, net, input_shape, num_classes, image_ids, mask_ids, log_dir, cuda,
                  miou_out_path="./temp_miou_out", eval_flag=True, period=1):
         super(EvalCallback, self).__init__()
 
         self.net = net
         self.input_shape = input_shape
         self.num_classes = num_classes
-        self.image_ids = image_ids
-        self.dataset_path = dataset_path
+        # self.image_ids = image_ids
+        # self.mask_ids = mask_ids
+        # self.dataset_path = dataset_path
         self.log_dir = log_dir
         self.cuda = cuda
         self.miou_out_path = miou_out_path
@@ -98,6 +99,7 @@ class EvalCallback():
         self.period = period
 
         self.image_ids = [image_id.split()[0] for image_id in image_ids]
+        self.mask_ids = [mask_id.split()[0] for mask_id in mask_ids]
         self.mious = [0]
         self.epoches = [0]
         if self.eval_flag:
@@ -122,10 +124,10 @@ class EvalCallback():
         #   添加上batch_size维度
         # ---------------------------------------------------------#
         image_data = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, np.float32)), (2, 0, 1)), 0)
-        # 因为模型只能将前半个batch进行分割，因此补一个全0的在后半batch位置
-        aug_data = np.zeros((2, image_data.shape[1], image_data.shape[2], image_data.shape[3]))
-        aug_data[0] = image_data
-        image_data = aug_data
+        # # 因为模型只能将前半个batch进行分割，因此补一个全0的在后半batch位置
+        # aug_data = np.zeros((2, image_data.shape[1], image_data.shape[2], image_data.shape[3]))
+        # aug_data[0] = image_data
+        # image_data = aug_data
 
         from segment_anything import SamAutomaticMaskGenerator
         mask_generator = SamAutomaticMaskGenerator(
