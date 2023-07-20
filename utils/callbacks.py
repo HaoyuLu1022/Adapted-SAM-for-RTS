@@ -127,6 +127,16 @@ class EvalCallback():
         aug_data[0] = image_data
         image_data = aug_data
 
+        from segment_anything import SamAutomaticMaskGenerator
+        mask_generator = SamAutomaticMaskGenerator(
+            model=self.net.module,
+            points_per_batch=128,
+            box_nms_thresh=0.1,
+            crop_n_layers=1,
+            crop_nms_thresh=0.5,
+            crop_n_points_downscale_factor=2,
+        )
+
         with torch.no_grad():
             images = torch.from_numpy(image_data).float()
             if self.cuda:
@@ -135,7 +145,15 @@ class EvalCallback():
             # ---------------------------------------------------#
             #   图片传入网络进行预测
             # ---------------------------------------------------#
-            pr = self.net(images)[0][0]
+            # pr = self.net(images)[0][0]
+            pr = []
+            for img in images:
+                masks = mask_generator.generate(img.permute(1, 2, 0))
+                mask = torch.zeros((masks[0]['segmentation'].shape[0], masks[0]['segmentation'].shape[1]))
+                for i in range(len(masks)):
+                    mask = torch.logical_or(mask, torch.from_numpy(masks[i]['segmentation']))
+                pr.append(mask.float())
+            pr = torch.stack(pr)
             # ---------------------------------------------------#
             #   取出每一个像素点的种类
             # ---------------------------------------------------#
@@ -157,7 +175,7 @@ class EvalCallback():
         image = Image.fromarray(np.uint8(pr))
         return image
 
-    def on_epoch_end(self, epoch, model_eval, alpha):
+    def on_epoch_end(self, epoch, model_eval):
         if epoch % self.period == 0 and self.eval_flag:
             self.net = model_eval
             # gt_dir = os.path.join(self.dataset_path, "VOC2007/SegmentationClass/")

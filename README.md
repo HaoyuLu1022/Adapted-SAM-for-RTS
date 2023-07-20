@@ -33,4 +33,6 @@ python main.py
 - 23-07-19: Now you can train this model. The input should be 1024x1024x3 images, and the model outputs masks of 256x256x1.
   - **Bugs**: `eval_callback` is currently not available, so leave `eval_flag` to `False` for now. 
   - Note that for one single NVIDIA A6000 with 48GB VRAM, the VRAM usage of batch size 2 requires around 41GB.
+- 23-07-20: [**Bug fixed**] `eval_callback` is now available, but is pretty time-consuming (300 mins for about 1600 images), so we still recommend leaving `eval_flag` to `False` to boost the efficiency of training.
+
 
