@@ -28,7 +28,6 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
         if iteration >= epoch_step: 
             break
         imgs, pngs, seg_labels = batch
-        seg_labels = seg_labels.permute(0, 3, 1, 2)
 
         with torch.no_grad():
             weights = torch.from_numpy(cls_weights)
@@ -79,14 +78,14 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
                 loss = dice_ce(outputs, pngs.unsqueeze(1))
 
             if dice_loss:
-                main_dice = Dice_loss(outputs, seg_labels.permute(0, 2, 3, 1))
+                main_dice = Dice_loss(outputs, seg_labels)
                 loss      = loss + main_dice
 
             with torch.no_grad():
                 #-------------------------------#
                 #   计算f_score
                 #-------------------------------#
-                _f_score = f_score(outputs, seg_labels.permute(0, 2, 3, 1))
+                _f_score = f_score(outputs, seg_labels)
 
             #----------------------#
             #   反向传播
@@ -206,7 +205,7 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
             #-------------------------------#
             #   计算f_score
             #-------------------------------#
-            _f_score    = f_score(outputs, seg_labels.permute(0, 2, 3, 1))
+            _f_score    = f_score(outputs, seg_labels)
 
             val_loss    += loss.item()
             val_f_score += _f_score.item()

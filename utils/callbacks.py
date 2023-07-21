@@ -107,27 +107,31 @@ class EvalCallback():
                 f.write(str(0))
                 f.write("\n")
 
-    def get_miou_png(self, image):
+    def get_miou_png(self, image_list):
         # ---------------------------------------------------------#
         #   在这里将图像转换成RGB图像，防止灰度图在预测时报错。
         #   代码仅仅支持RGB图像的预测，所有其它类型的图像都会转化成RGB
         # ---------------------------------------------------------#
-        image = cvtColor(image)
-        orininal_h = np.array(image).shape[0]
-        orininal_w = np.array(image).shape[1]
-        # ---------------------------------------------------------#
-        #   给图像增加灰条，实现不失真的resize
-        #   也可以直接resize进行识别
-        # ---------------------------------------------------------#
-        image_data, nw, nh = resize_image(image, (self.input_shape[1], self.input_shape[0]))
-        # ---------------------------------------------------------#
-        #   添加上batch_size维度
-        # ---------------------------------------------------------#
-        image_data = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, np.float32)), (2, 0, 1)), 0)
-        # # 因为模型只能将前半个batch进行分割，因此补一个全0的在后半batch位置
-        # aug_data = np.zeros((2, image_data.shape[1], image_data.shape[2], image_data.shape[3]))
-        # aug_data[0] = image_data
-        # image_data = aug_data
+        images = []
+        for image_dir in image_list:
+            image = Image.open(image_dir)
+            image = cvtColor(image)
+            original_h = np.array(image).shape[0]
+            original_w = np.array(image).shape[1]
+            # ---------------------------------------------------------#
+            #   给图像增加灰条，实现不失真的resize
+            #   也可以直接resize进行识别
+            # ---------------------------------------------------------#
+            image_data, nw, nh = resize_image(image, (self.input_shape[1], self.input_shape[0]))
+            # ---------------------------------------------------------#
+            #   添加上batch_size维度
+            # ---------------------------------------------------------#
+            # image_data = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, np.float32)), (2, 0, 1)), 0)
+            image_data = np.transpose(preprocess_input(np.array(image_data, np.float32)), (2, 0, 1))
+            images.append({
+                'image': torch.from_numpy(image_data).to("cuda:0"),
+                'original_size': (original_h, original_w)
+                })
 
         from segment_anything import SamAutomaticMaskGenerator
         mask_generator = SamAutomaticMaskGenerator(
@@ -140,44 +144,51 @@ class EvalCallback():
         )
 
         with torch.no_grad():
-            images = torch.from_numpy(image_data).float()
-            if self.cuda:
-                images = images.cuda()
+            # images = torch.from_numpy(image_data).float()
+            # if self.cuda:
+            #     images = images.cuda()
 
             # ---------------------------------------------------#
             #   图片传入网络进行预测
             # ---------------------------------------------------#
-            # pr = self.net(images)[0][0]
-            pr = []
-            for img in images:
-                masks = mask_generator.generate(img.permute(1, 2, 0))
-                mask = torch.zeros((masks[0]['segmentation'].shape[0], masks[0]['segmentation'].shape[1]))
-                for i in range(len(masks)):
-                    mask = torch.logical_or(mask, torch.from_numpy(masks[i]['segmentation']))
-                pr.append(mask.float())
-            pr = torch.stack(pr)
-            # ---------------------------------------------------#
-            #   取出每一个像素点的种类
-            # ---------------------------------------------------#
-            pr = F.softmax(pr.permute(1, 2, 0), dim=-1).cpu().numpy()
-            # --------------------------------------#
-            #   将灰条部分截取掉
-            # --------------------------------------#
-            pr = pr[int((self.input_shape[0] - nh) // 2): int((self.input_shape[0] - nh) // 2 + nh), \
-                 int((self.input_shape[1] - nw) // 2): int((self.input_shape[1] - nw) // 2 + nw)]
-            # ---------------------------------------------------#
-            #   进行图片的resize
-            # ---------------------------------------------------#
-            pr = cv2.resize(pr, (orininal_w, orininal_h), interpolation=cv2.INTER_LINEAR)
-            # ---------------------------------------------------#
-            #   取出每一个像素点的种类
-            # ---------------------------------------------------#
-            pr = pr.argmax(axis=-1)
+            # pr = []
+            # for img in images:
+            #     masks = mask_generator.generate(img.permute(1, 2, 0))
+            #     mask = torch.zeros((masks[0]['segmentation'].shape[0], masks[0]['segmentation'].shape[1]))
+            #     for i in range(len(masks)):
+            #         mask = torch.logical_or(mask, torch.from_numpy(masks[i]['segmentation']))
+            #     pr.append(mask.float())
+            # pr = torch.stack(pr)
+            batched_output = self.net.module(images, multimask_output=False)
+            prs = [output['masks'].float().squeeze(0) for output in batched_output]
+            # pr = torch.cat(pr, dim=0).squeeze(1)
+            img_out = []
+            for i in range(len(prs)):
+                pr = prs[i]
+                # ---------------------------------------------------#
+                #   取出每一个像素点的种类
+                # ---------------------------------------------------#
+                pr = F.softmax(pr.permute(1, 2, 0), dim=-1).cpu().numpy()
+                # --------------------------------------#
+                #   将灰条部分截取掉
+                # --------------------------------------#
+                pr = pr[int((self.input_shape[0] - nh) // 2): int((self.input_shape[0] - nh) // 2 + nh), \
+                    int((self.input_shape[1] - nw) // 2): int((self.input_shape[1] - nw) // 2 + nw)]
+                # ---------------------------------------------------#
+                #   进行图片的resize
+                # ---------------------------------------------------#
+                pr = np.expand_dims(cv2.resize(pr, (images[i]['original_size'][1], images[i]['original_size'][0]), interpolation=cv2.INTER_LINEAR), axis=-1)
+                # ---------------------------------------------------#
+                #   取出每一个像素点的种类
+                # ---------------------------------------------------#
+                pr = pr.argmax(axis=-1)
 
-        image = Image.fromarray(np.uint8(pr))
-        return image
+                image = Image.fromarray(np.uint8(pr))
+                img_out.append(image)
+        return img_out
 
     def on_epoch_end(self, epoch, model_eval):
+        batch_size = 8
         if epoch % self.period == 0 and self.eval_flag:
             self.net = model_eval
             # gt_dir = os.path.join(self.dataset_path, "VOC2007/SegmentationClass/")
@@ -198,20 +209,23 @@ class EvalCallback():
             #     os.makedirs(pred_dir_part)
             print("Get miou.")
             pred_dir = []
-            for image_id in tqdm(self.image_ids):
+            for i in tqdm(range(0, len(self.image_ids), batch_size)):
                 # -------------------------------#
                 #   从文件中读取图像
                 # -------------------------------#
                 # image_path = os.path.join(self.dataset_path, "VOC2007/JPEGImages/" + image_id + ".jpg")
                 # image = Image.open(image_path)
-                image = Image.open(image_id)
+                image_id_list = self.image_ids[i:(i+batch_size)]
                 # ------------------------------#
                 #   获得预测txt
                 # ------------------------------#
-                image = self.get_miou_png(image)
-                save_dir = self.miou_out_path+'/'+image_id[12:16]+image_id[23:-4]+".png"
-                image.save(save_dir)
-                pred_dir.append(save_dir)
+                images = self.get_miou_png(image_id_list)
+                for j in range(len(images)):
+                    image_id = image_id_list[j]
+                    image = images[j]
+                    save_dir = self.miou_out_path+'/'+image_id[12:16]+image_id[23:-4]+".png"
+                    image.save(save_dir)
+                    pred_dir.append(save_dir)
 
             print("Calculate miou.")
             # png_list = self.image_ids.copy()
