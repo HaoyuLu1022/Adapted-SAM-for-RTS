@@ -196,15 +196,17 @@ class EvalCallback():
             for i in range(len(gt_dir)):
                 gt_dir[i] = gt_dir[i][:-3] + 'png'
                 parts = gt_dir[i].split('/')
-                parts[3] = 'masks'
+                parts[3] = '0'
+                parts[4] = 'label_data_pngs_aug'
                 gt_dir[i] = os.path.join(*parts)
             # pred_dir_part = os.path.join(self.miou_out_path, 'detection-results')
             if not os.path.exists(self.miou_out_path):
                 os.makedirs(self.miou_out_path)
-                os.makedirs(self.miou_out_path + '/2019')
-                os.makedirs(self.miou_out_path + '/2020')
-                os.makedirs(self.miou_out_path + '/2021')
-                os.makedirs(self.miou_out_path + '/2022')
+                # os.makedirs(self.miou_out_path + '/2019')
+                # os.makedirs(self.miou_out_path + '/2020')
+                # os.makedirs(self.miou_out_path + '/2021')
+                # os.makedirs(self.miou_out_path + '/2022')
+                os.makedirs(f"{self.miou_out_path}/0/label_data_pngs_aug")
             # if not os.path.exists(pred_dir_part):
             #     os.makedirs(pred_dir_part)
             print("Get miou.")
@@ -223,7 +225,8 @@ class EvalCallback():
                 for j in range(len(images)):
                     image_id = image_id_list[j]
                     image = images[j]
-                    save_dir = self.miou_out_path+'/'+image_id[12:16]+image_id[23:-4]+".png"
+                    # save_dir = self.miou_out_path+'/'+image_id[12:16]+image_id[23:-4]+".png"
+                    save_dir = f"{self.miou_out_path}/0/label_data_pngs_aug/{image_id[57:-4]}.png"
                     image.save(save_dir)
                     pred_dir.append(save_dir)
 
