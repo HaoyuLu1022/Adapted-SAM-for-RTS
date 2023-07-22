@@ -20,15 +20,15 @@ class SAMAdaDataset(Dataset):
         self.train = train
         self.dataset_path = dataset_path
 
-        self.img_path = os.path.join(self.dataset_path, 'images')
+        # self.img_path = os.path.join(self.dataset_path, 'images')
+        # self.img_list = os.listdir(self.img_path)
+        # self.mask_path = os.path.join(self.dataset_path, 'masks')
+        # self.mask_list = os.listdir(self.mask_path)
+        self.img_path = os.path.join(self.dataset_path, 'training_data_jpgs_aug')
         self.img_list = os.listdir(self.img_path)
-        self.mask_path = os.path.join(self.dataset_path, 'masks')
+        self.mask_path = os.path.join(self.dataset_path, 'label_data_pngs_aug')
         self.mask_list = os.listdir(self.mask_path)
-        self.label_path = os.path.join(self.dataset_path, 'labels')
-        self.label_list = os.listdir(self.label_path)
 
-    # 考虑到source和target数据集可能大小不同，暂时与两者中最小值对齐
-    #  并通过align_dataset成员判断与两者哪一个对其
     def __len__(self):
         self.length = len(self.img_list)
         return self.length

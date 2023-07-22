@@ -28,13 +28,14 @@ Install necessary packages, run `main.py` for training, and you are good to go. 
 python main.py
 ```
 
-## logs
+## Logs
 
 - 23-07-19: Now you can train this model. The input should be 1024x1024x3 images, and the model outputs masks of 256x256x1.
   - **Bugs**: `eval_callback` is currently not available, so leave `eval_flag` to `False` for now. 
-  - Note that for one single NVIDIA A6000 with 48GB VRAM, the VRAM usage of batch size 2 requires around 41GB.
-- 23-07-20: [**Bug fixed**] `eval_callback` is now available, but is pretty time-consuming (300 mins for ~1600 images), so we still recommend leaving `eval_flag` to `False` to boost the efficiency of training.
-- 23-07-21: `get_miou_png` method in class `eval_callback` has been rewritten according to `Sam.forward()` to speed up inference based on batching input images. It now produces masks 20x faster (14 mins for ~1600 images) compared to previous versions using  `SamAutomaticMaskGenerator`.
+  - Note that for one single NVIDIA A6000 with 48GB VRAM, the VRAM usage of `vit_h` using batch size of 2 requires around 41GB.
+- 23-07-20: [**Bug fixed**] `eval_callback` is now available, but is pretty time-consuming (300 mins for ~1600 images, `vit_h`), so we still recommend leaving `eval_flag` to `False` to boost the efficiency of training.
+- 23-07-21: `get_miou_png` method in class `eval_callback` has been rewritten according to `Sam.forward()` to speed up inference based on batching input images. It now produces masks 20x faster (14 mins for ~1600 images, `vit_h`) compared to previous versions using  `SamAutomaticMaskGenerator`.
   - The preprocess, post-process and prompt embedding in `Sam.forward()` are still not implmented in this process.
+- 23-07-22: Code is slighty modified to train for **crater segmentation**
 
 

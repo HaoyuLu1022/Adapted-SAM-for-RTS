@@ -157,7 +157,7 @@ def train(model_path, ver='vit_h'):
     #   Unfreeze_batch_size     模型在解冻后的batch_size
     # ------------------------------------------------------------------#
     UnFreeze_Epoch = 100
-    Unfreeze_batch_size = 2
+    Unfreeze_batch_size = 4
 
     # ------------------------------------------------------------------#
     #   Freeze_Train    是否进行冻结训练
@@ -194,7 +194,7 @@ def train(model_path, ver='vit_h'):
     # ------------------------------------------------------------------#
     #   save_period     多少个epoch保存一次权值
     # ------------------------------------------------------------------#
-    save_period = 100
+    save_period = 5
     # ------------------------------------------------------------------#
     #   save_dir        权值与日志文件保存的文件夹
     # ------------------------------------------------------------------#
@@ -273,7 +273,7 @@ def train(model_path, ver='vit_h'):
     #                 pretrained=pretrained)
     # ckpt = "model_weights/sam_vit_h_4b8939.pth"
     # ver = "vit_h"
-    model = sam_model_registry[ver](checkpoint=model_path)
+    model = sam_model_registry[ver[4:9]](checkpoint=model_path)
     # if not pretrained:
     #     weights_init(model)
     """
@@ -348,7 +348,7 @@ def train(model_path, ver='vit_h'):
                                                                     find_unused_parameters=True)
         else:
             model_train = torch.nn.DataParallel(model)
-            cudnn.benchmark = True
+            # cudnn.benchmark = True
             model_train = model_train.cuda()
 
     # ------------------------------------------------------#
@@ -405,7 +405,17 @@ def train(model_path, ver='vit_h'):
         dataset_2020_path = '../datasets/2020'
         dataset_2021_path = '../datasets/2021'
         dataset_2022_path = '../datasets/2022'
-        dataset = SAMAdaDataset(input_shape, output_shape, num_classes, True, dataset_2019_path)
+        crater_dataset_path = '../craterdatasets/training_data'
+        crater_0_path = f'{crater_dataset_path}/0'
+        crater_1_path = f'{crater_dataset_path}/1'
+        crater_2_path = f'{crater_dataset_path}/2'
+        crater_3_path = f'{crater_dataset_path}/3'
+        crater_4_path = f'{crater_dataset_path}/4'
+        crater_5_path = f'{crater_dataset_path}/5'
+        crater_6_path = f'{crater_dataset_path}/6'
+        crater_7_path = f'{crater_dataset_path}/7'
+        crater_8_path = f'{crater_dataset_path}/8'
+        dataset = SAMAdaDataset(input_shape, output_shape, num_classes, True, crater_0_path)
         train_dataset, val_dataset = torch.utils.data.random_split(dataset, [int(0.8*len(dataset)), len(dataset)-int(0.8*len(dataset))])
         num_train = len(train_dataset)
         num_val = len(val_dataset)
