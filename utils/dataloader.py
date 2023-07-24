@@ -41,7 +41,8 @@ class SAMAdaDataset(Dataset):
         #   从文件中读取图像
         #-------------------------------#
         jpg         = Image.open(os.path.join(self.img_path, self.img_list[index]))
-        png         = Image.open(os.path.join(self.mask_path, self.mask_list[index]))
+        mask_name = self.img_list[index].split('.')[0] + '.png'
+        png         = Image.open(os.path.join(self.mask_path, mask_name))
         #-------------------------------#
         #   数据增强
         #-------------------------------#
@@ -59,7 +60,7 @@ class SAMAdaDataset(Dataset):
         seg_labels  = seg_labels.reshape((int(self.output_shape[0]), int(self.output_shape[1]), self.num_classes + 1))
 
         jpg_dir = os.path.join(self.img_path, self.img_list[index])
-        png_dir = os.path.join(self.mask_path, self.mask_list[index])
+        png_dir = os.path.join(self.mask_path, mask_name)
 
         return jpg, png, seg_labels, jpg_dir, png_dir
 
