@@ -37,5 +37,7 @@ python main.py
 - 23-07-21: `get_miou_png` method in class `eval_callback` has been rewritten according to `Sam.forward()` to speed up inference based on batching input images. It now produces masks 20x faster (14 mins for ~1600 images, `vit_h`) compared to previous versions using  `SamAutomaticMaskGenerator`.
   - The preprocess, post-process and prompt embedding in `Sam.forward()` are still not implmented in this process.
 - 23-07-22: Code is slighty modified to train for **crater segmentation**
+- 23-07-24: [**Bug fixed**] Fixed a bug where images and masks are loaded in the same sequence.
+  - Change the `lr_scheduler` from `cos` to `step`
 
 

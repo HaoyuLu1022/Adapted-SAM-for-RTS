@@ -190,7 +190,7 @@ def train(model_path, ver='vit_h'):
     # ------------------------------------------------------------------#
     #   lr_decay_type   使用到的学习率下降方式，可选的有'step'、'cos'
     # ------------------------------------------------------------------#
-    lr_decay_type = 'cos'
+    lr_decay_type = 'step'
     # ------------------------------------------------------------------#
     #   save_period     多少个epoch保存一次权值
     # ------------------------------------------------------------------#
@@ -438,8 +438,10 @@ def train(model_path, ver='vit_h'):
         # ----------------------#
         #   记录eval的map曲线
         # ----------------------#
-        val_img_list = [item[3] for item in val_dataset]
-        val_msk_list = [item[4] for item in val_dataset]
+        # val_img_list = [item[3] for item in val_dataset]
+        # val_msk_list = [item[4] for item in val_dataset]
+        val_img_list = val_dataset.dataset.img_list.copy()
+        val_msk_list = val_dataset.dataset.mask_list.copy()
         # val_list = list(chain(*val_list))
         if local_rank == 0:
             eval_callback = EvalCallback(model, input_shape, num_classes, val_img_list, val_msk_list, log_dir, Cuda, \

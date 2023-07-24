@@ -27,7 +27,8 @@ class SAMAdaDataset(Dataset):
         self.img_path = os.path.join(self.dataset_path, 'training_data_jpgs_aug')
         self.img_list = os.listdir(self.img_path)
         self.mask_path = os.path.join(self.dataset_path, 'label_data_pngs_aug')
-        self.mask_list = os.listdir(self.mask_path)
+        # self.mask_list = os.listdir(self.mask_path)
+        self.mask_list = [f"{item.split('.')[0]}.png" for item in self.img_list]
 
     def __len__(self):
         self.length = len(self.img_list)
@@ -41,8 +42,8 @@ class SAMAdaDataset(Dataset):
         #   从文件中读取图像
         #-------------------------------#
         jpg         = Image.open(os.path.join(self.img_path, self.img_list[index]))
-        mask_name = self.img_list[index].split('.')[0] + '.png'
-        png         = Image.open(os.path.join(self.mask_path, mask_name))
+        # mask_name = self.img_list[index].split('.')[0] + '.png'
+        png         = Image.open(os.path.join(self.mask_path, self.mask_list[index]))
         #-------------------------------#
         #   数据增强
         #-------------------------------#
@@ -60,7 +61,7 @@ class SAMAdaDataset(Dataset):
         seg_labels  = seg_labels.reshape((int(self.output_shape[0]), int(self.output_shape[1]), self.num_classes + 1))
 
         jpg_dir = os.path.join(self.img_path, self.img_list[index])
-        png_dir = os.path.join(self.mask_path, mask_name)
+        png_dir = os.path.join(self.mask_path, self.mask_list[index])
 
         return jpg, png, seg_labels, jpg_dir, png_dir
 
