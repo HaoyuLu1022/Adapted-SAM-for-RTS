@@ -438,10 +438,8 @@ def train(model_path, ver='vit_h'):
         # ----------------------#
         #   记录eval的map曲线
         # ----------------------#
-        # val_img_list = [item[3] for item in val_dataset]
-        # val_msk_list = [item[4] for item in val_dataset]
-        val_img_list = val_dataset.dataset.img_list.copy()
-        val_msk_list = val_dataset.dataset.mask_list.copy()
+        val_img_list = [item[3] for item in val_dataset]
+        val_msk_list = [item[4] for item in val_dataset]
         # val_list = list(chain(*val_list))
         if local_rank == 0:
             eval_callback = EvalCallback(model, input_shape, num_classes, val_img_list, val_msk_list, log_dir, Cuda, \
